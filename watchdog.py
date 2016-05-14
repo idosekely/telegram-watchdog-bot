@@ -134,7 +134,7 @@ class Watchdog(object):
         test_type = command_args[0]
         args = command_args[1:]
         test_cls = test_factory(test_type)
-        test = test_cls(test_type, *args)
+        test = test_cls(*args)
         self.test_list[test.name] = test
         bot.sendMessage(update.message.chat_id, text='watching on %s' % (test.name, ))
 
