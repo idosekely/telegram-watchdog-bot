@@ -9,6 +9,8 @@ from optparse import OptionParser
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from tests import test_list, test_factory
 import logging
+import time
+from threading import Thread
 
 __author__ = 'sekely'
 
@@ -25,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class Watchdog(object):
+    switch = 'off'
 
     def __init__(self, token):
         # Create the EventHandler and pass it your bot's token.
@@ -35,9 +38,9 @@ class Watchdog(object):
 
         # on different commands - answer in Telegram
         dp.addHandler(CommandHandler("start", self.start))
-        # dp.addHandler(CommandHandler("help", self.help))
         dp.addHandler(CommandHandler("watch", self.watch))
         dp.addHandler(CommandHandler("status", self.status))
+        dp.addHandler(CommandHandler("poll", self.poll))
 
         # log all errors
         dp.addErrorHandler(self.error)
@@ -58,6 +61,24 @@ class Watchdog(object):
         for test_name, test in test_list.iteritems():
             status = test.run()
             bot.sendMessage(update.message.chat_id, text='test %s status: %s' % (test_name, status))
+
+    def _poll(self, bot, update, timer=5):
+        while self.switch == 'on':
+            for test_name, test in test_list.iteritems():
+                status = test.run()
+                bot.sendMessage(update.message.chat_id, text='test %s status: %s' % (test_name, status))
+            time.sleep(timer)
+
+    def poll(self, bot, update):
+        command_args = update.message.text.split()[1:]
+        if not command_args:
+            return
+        self.switch = command_args[0]
+        if self.switch == 'on':
+            timer = command_args[1] if len(command_args) > 1 else 5
+            timer = float(timer)
+            self._thread = Thread(target=self._poll, args=(bot, update, timer))
+            self._thread.start()
 
     def watch(self, bot, update):
         command_args = update.message.text.split()[1:]

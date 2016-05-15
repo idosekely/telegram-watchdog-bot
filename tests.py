@@ -28,7 +28,7 @@ class TestCase(object):
     def run(self):
         try:
             res = self.test()
-        except:
+        except Exception as e:
             res = False
         self.last_run = datetime.datetime.now()
         return self.PASS if res else self.FAILED
@@ -83,6 +83,8 @@ def test_factory(test_type):
         return TestCase
     raise BotTestError('test type %s not supported' % test_type)
 
+test_list = {}
+
 # you can create test instance and add it to the list here
 # example:
 # toll_road_test_1 = RestTest('http://localhost:5000/analyzer/describe')
@@ -94,4 +96,4 @@ def test_factory(test_type):
 #     toll_road_test_1.name: toll_road_test_1,
 #     toll_road_test_2.name: toll_road_test_2,
 #     }
-test_list = {}
+# test_list = {}
