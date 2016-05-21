@@ -58,15 +58,20 @@ class Watchdog(object):
         bot.sendMessage(update.message.chat_id, text='Hi!')
 
     def status(self, bot, update):
-        for test_name, test in test_list.iteritems():
-            status = test.run()
-            bot.sendMessage(update.message.chat_id, text='test %s status: %s' % (test_name, status))
+        for test in test_list.itervalues():
+            self._msg(test, bot, update, validate=False)
+
+    @staticmethod
+    def _msg(test, bot, update, validate=True):
+        if validate and not test.validate():
+            return
+        status = test.run()
+        bot.sendMessage(update.message.chat_id, text='test %s status: %s' % (test.name, status))
 
     def _poll(self, bot, update, timer=5):
         while self.switch == 'on':
-            for test_name, test in test_list.iteritems():
-                status = test.run()
-                bot.sendMessage(update.message.chat_id, text='test %s status: %s' % (test_name, status))
+            for test in test_list.itervalues():
+                self._msg(test, bot, update)
             time.sleep(timer)
 
     def poll(self, bot, update):
