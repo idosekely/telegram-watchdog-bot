@@ -14,16 +14,24 @@ class TestCase(object):
     PASS = 'Pass!'
     FAILED = 'Failed!'
 
-    def __init__(self, test_type, name=None, schedule=1):
+    def __init__(self, test_type, name=None, schedule=30):
         if test_type not in self.test_types:
             raise BotTestError("illegal test type")
         self.test_type = test_type
         self.name = name
-        self.schedule=schedule
+        self.schedule = schedule
         self.last_run = None
+        self.watch = True
 
     def test(self):
         raise BotTestError("test not implemented")
+
+    def validate(self):
+        if not self.watch:
+            return False
+        if self.last_run and datetime.datetime.now() - self.last_run < datetime.timedelta(seconds=self.schedule):
+            return False
+        return True
 
     def run(self):
         try:
@@ -38,23 +46,22 @@ class PidTest(TestCase):
     PASS = 'Process running'
     FAILED = 'Not exist!'
 
-    def __init__(self, pid, schedule=1):
+    def __init__(self, pid, schedule=60):
         super(PidTest, self).__init__('pid', pid, schedule)
-        self.pid = pid
+        self.pid = int(pid)
 
     def test(self):
         """ Check For the existence of a unix pid. """
         try:
             os.kill(self.pid, 0)
+            return True
         except OSError:
             return False
-        else:
-            return True
 
 
 class RestTest(TestCase):
 
-    def __init__(self, endpoint, schedule=1, params=None):
+    def __init__(self, endpoint, schedule=60, params=None):
         super(RestTest, self).__init__('rest', endpoint, schedule)
         self.endpoint = endpoint
         self.params = params if params else {}
@@ -96,4 +103,3 @@ test_list = {}
 #     toll_road_test_1.name: toll_road_test_1,
 #     toll_road_test_2.name: toll_road_test_2,
 #     }
-# test_list = {}
